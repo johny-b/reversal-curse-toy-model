@@ -11,6 +11,7 @@ def get_datasets(
     max_num: int,
     train_ratio: float,
     seed: int = None,
+    device: str = "cpu",
 ) -> tuple[TorchDataset, TorchDataset]:
     rng = np.random.default_rng(seed)
     
@@ -41,14 +42,15 @@ def get_datasets(
             train_data.append(first_second[0])
             test_data.append(first_second[1])
             
-    return Dataset(train_data, max_num), Dataset(test_data, max_num)
+    return Dataset(train_data, max_num, device=device), Dataset(test_data, max_num, device=device)
 
 # %%
 
 class Dataset(TorchDataset):
-    def __init__(self, pairs: list[tuple[int, int, int]], max_num: int):
+    def __init__(self, pairs: list[tuple[int, int, int]], max_num: int, device: str):
         self.pairs = pairs
         self.max_num = max_num
+        self.device = device
         
     def __len__(self) -> int:
         return len(self.pairs)
@@ -60,7 +62,7 @@ class Dataset(TorchDataset):
         x[num_1] = 1
         x[num_2 + self.max_num] = 1
                 
-        return x, t.tensor([val]).to(t.float32)
+        return x.to(self.device), t.tensor([val]).to(t.float32).to(self.device)
 
               
 # %%

@@ -12,16 +12,17 @@ import torch as t
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from models import MLP
+import models
 from datasets import get_datasets
 
 writer = SummaryWriter('runs')
+device = "cuda"
 
 # %%
 max_num = 100
 
-trainset, testset = get_datasets(max_num, 0.6)
-batch_size = 16
+trainset, testset = get_datasets(max_num, 0.6, device=device)
+batch_size = 1024
 
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
 
@@ -35,11 +36,9 @@ def get_loss_and_acc(model, X, y):
     acc = (preds.round() == y).to(float).mean().item()
     return loss, acc
 
-model = MLP(max_num, hidden_width=32, num_hidden=2)
+model = models.Transformer(max_num=max_num, d_model=64, nhead=8, num_layers=1).to(device)
 optimizer = t.optim.AdamW(model.parameters(), lr=0.001)
-epochs = 1000
-
-print(model.model)
+epochs = 100000
 
 for epoch_ix, epoch in enumerate(tqdm(range(epochs))):
     for batch_ix, (X, y) in enumerate(train_loader):
